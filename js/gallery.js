@@ -64,42 +64,70 @@ const images = [
   },
 ];
 
-const gallery = document.querySelector('.gallery');
-const galleryItem = images
-  .map(
-    ({ preview, original, description }) => `
-  <li class="gallery-item">
-    <a class="gallery-link" href="${original}">
-      <img
+const gallery = document.querySelector(".gallery");
+
+function listTemplate(img) {
+    return `<li class="gallery-item">
+    <a class="gallery-link" href="${img.original}">
+    <img
         class="gallery-image"
-        src="${preview}"
-        data-source="${original}"
-        alt="${description}"
-      />
+        src="${img.preview}"
+        data-source="${img.original}"
+        alt="${img.description}"
+    />
     </a>
-  </li>
+</li>`;
+}
+
+function addListTemplate(images) {
+    return images.map(listTemplate).join("");
+    
+}
+
+function render() {
+    const markup = addListTemplate(images);
+    gallery.innerHTML = markup; 
+    const galleryLinks = document.querySelectorAll(".gallery-link");
+    galleryLinks.forEach(link => {
+        link.addEventListener("click", function (e) {
+            e.preventDefault();
+        });
+    });
+}
+
+render();
+
+let modalOpen = false;
+
+gallery.addEventListener("click", e => {
+    if (e.target === e.currentTarget) return;
+    const previewLink = e.target.getAttribute('data-source');
+    const instance = basicLightbox.create(`
+    <img src="${previewLink}" width="1112" height="640">
 `,
-  )
-  .join('\n');
+{
+    onShow: instance => {
+        modalOpen = true;
+        document.addEventListener('keydown', closeModal);
+    },
+    onClose: instance => {
+        modalOpen = false;
+        document.removeEventListener('keydown', closeModal);
+    },
+})
+    function closeModal(e) {
+        if(modalOpen && e.code === 'Escape')
+        instance.close()
+    }
 
-gallery.innerHTML = galleryItem;
+instance.show()
+})
 
-let instance;
+ 
 
-const galleryItems = document.querySelectorAll('.gallery-item');
 
-galleryItems.forEach(item => {
-  item.addEventListener('click', event => {
-    event.preventDefault();
-    const galleryLink = event.currentTarget.querySelector('.gallery-link');
-    instance = basicLightbox.create(`
-    <img src="${galleryLink.href}" width="1112" height="640">
-`);
-    instance.show();
-  });
 
-  document.addEventListener('keydown', escapePress);
-});
+
 
 function escapePress(event) {
   if (event.code === 'Escape') {
